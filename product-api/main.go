@@ -1,27 +1,19 @@
 package main
 
 import (
-	"fmt"
-	"io"
 	"log"
+	"main/handlers"
 	"net/http"
+	"os"
 )
 
 func main() {
+	logger := log.New(os.Stdout, "product-api", log.LstdFlags)
+	home := handlers.NewHome(logger)
 
-	http.HandleFunc("/goodbye", func(writer http.ResponseWriter, request *http.Request) {
-		log.Println("Goodbye and see you again soon")
-	})
-	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		log.Println("Hello World!")
-		data, err := io.ReadAll(request.Body)
-		if err != nil {
-			http.Error(writer, "An Error Occurred", http.StatusBadRequest)
-			return
-		}
-		fmt.Fprintf(writer, "%s\n", data)
-	})
+	serverMux := http.NewServeMux()
+	serverMux.Handle("/", home)
 
 	// listen from all IPs and serve on port 9091
-	http.ListenAndServe(":9091", nil)
+	http.ListenAndServe(":9091", serverMux)
 }
