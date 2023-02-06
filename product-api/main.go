@@ -15,15 +15,13 @@ func main() {
 	logger := log.New(os.Stdout, "product-api:", log.LstdFlags)
 
 	//create a home page handler
-	home := handlers.NewHome(logger)
-	about := handlers.NewAbout(logger)
+	products := handlers.NewProducts(logger)
 
 	// Create a server mux
 	handler := http.NewServeMux()
 
 	//register handlers
-	handler.Handle("/", home)
-	handler.Handle("/about", about)
+	handler.Handle("/", products)
 
 	server := http.Server{
 		Addr:         ":9091",
