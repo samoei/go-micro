@@ -1,27 +1,53 @@
 package main
 
 import (
-	"fmt"
-	"io"
+	"context"
 	"log"
+	"main/handlers"
 	"net/http"
+	"os"
+	"os/signal"
+	"time"
 )
 
 func main() {
+	//handlers do need a logger
+	logger := log.New(os.Stdout, "product-api:", log.LstdFlags)
 
-	http.HandleFunc("/goodbye", func(writer http.ResponseWriter, request *http.Request) {
-		log.Println("Goodbye and see you again soon")
-	})
-	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		log.Println("Hello World!")
-		data, err := io.ReadAll(request.Body)
+	//create a home page handler
+	home := handlers.NewHome(logger)
+	about := handlers.NewAbout(logger)
+
+	// Create a server mux
+	handler := http.NewServeMux()
+
+	//register handlers
+	handler.Handle("/", home)
+	handler.Handle("/about", about)
+
+	server := http.Server{
+		Addr:         ":9091",
+		Handler:      handler,
+		IdleTimeout:  120 * time.Second,
+		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 1 * time.Second,
+	}
+
+	go func() {
+		err := server.ListenAndServe()
 		if err != nil {
-			http.Error(writer, "An Error Occurred", http.StatusBadRequest)
-			return
+			logger.Fatal(err)
 		}
-		fmt.Fprintf(writer, "%s\n", data)
-	})
+	}()
 
-	// listen from all IPs and serve on port 9091
-	http.ListenAndServe(":9091", nil)
+	sigChan := make(chan os.Signal)
+	signal.Notify(sigChan, os.Interrupt)
+	signal.Notify(sigChan, os.Kill)
+
+	sig := <-sigChan
+
+	logger.Println("Received a terminate request of type:", sig, "\nGraceful shutdown...")
+
+	timeoutContext, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	server.Shutdown(timeoutContext)
 }
