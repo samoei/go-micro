@@ -14,10 +14,10 @@ func main() {
 	//handlers do need a logger
 	logger := log.New(os.Stdout, "product-api:", log.LstdFlags)
 
-	//create a home page handler
+	//create a products endpoint
 	products := handlers.NewProducts(logger)
 
-	// Create a server mux
+	// Create a server mux AKA handler
 	handler := http.NewServeMux()
 
 	//register handlers

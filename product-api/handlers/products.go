@@ -38,4 +38,14 @@ func (p *Products) getProducts(resp http.ResponseWriter, req *http.Request) {
 
 func (p *Products) createProduct(w http.ResponseWriter, r *http.Request) {
 	p.l.Println("Creating new product")
+
+	prod := &data.Product{}
+	err := prod.FromJSON(r.Body)
+
+	if err != nil {
+		http.Error(w, "Unable to parse the payload", http.StatusBadRequest)
+		return
+	}
+
+	data.AddProduct(prod)
 }
