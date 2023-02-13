@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/gorilla/mux"
 	"log"
 	"main/handlers"
 	"net/http"
@@ -10,6 +11,8 @@ import (
 	"time"
 )
 
+const bindAddress = "9090"
+
 func main() {
 	//handlers do need a logger
 	logger := log.New(os.Stdout, "product-api:", log.LstdFlags)
@@ -17,16 +20,30 @@ func main() {
 	//create a products endpoint
 	products := handlers.NewProducts(logger)
 
-	// Create a server mux AKA handler
-	handler := http.NewServeMux()
+	// Create a server mux AKA router
+	router := mux.NewRouter()
+
+	// GET
+	getRouter := router.Methods(http.MethodGet).Subrouter()
+	getRouter.HandleFunc("/", products.GetProducts)
+
+	// POST
+	postRouter := router.Methods(http.MethodPost).Subrouter()
+	postRouter.HandleFunc("/", products.CreateProduct)
+	postRouter.Use(products.MiddlewareValidateProduct)
+
+	// PUT
+	putRoute := router.Methods(http.MethodPut).Subrouter()
+	putRoute.HandleFunc("/{id:[0-9]+}", products.UpdateProducts)
+	putRoute.Use(products.MiddlewareValidateProduct)
 
 	//register handlers
-	handler.Handle("/", products)
+	//router.Handle("/", products)
 
 	// server properties
 	server := http.Server{
-		Addr:         ":9091",
-		Handler:      handler,
+		Addr:         ":" + bindAddress,
+		Handler:      router,
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
@@ -34,6 +51,7 @@ func main() {
 
 	//start the server on a different thread
 	go func() {
+		logger.Println("Starting Server on port", bindAddress)
 		err := server.ListenAndServe()
 		if err != nil {
 			logger.Fatal(err)
