@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/gorilla/mux"
 	"log"
 	"main/handlers"
 	"net/http"
@@ -17,16 +18,19 @@ func main() {
 	//create a products endpoint
 	products := handlers.NewProducts(logger)
 
-	// Create a server mux AKA handler
-	handler := http.NewServeMux()
+	// Create a server mux AKA router
+	router := mux.NewRouter()
+
+	getRouter := router.Methods(http.MethodGet).Subrouter()
+	getRouter.HandleFunc("/", products.GetProducts)
 
 	//register handlers
-	handler.Handle("/", products)
+	//router.Handle("/", products)
 
 	// server properties
 	server := http.Server{
 		Addr:         ":9091",
-		Handler:      handler,
+		Handler:      router,
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
