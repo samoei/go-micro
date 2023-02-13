@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+const bindAddress = "9090"
+
 func main() {
 	//handlers do need a logger
 	logger := log.New(os.Stdout, "product-api:", log.LstdFlags)
@@ -21,20 +23,26 @@ func main() {
 	// Create a server mux AKA router
 	router := mux.NewRouter()
 
-	// Get Route
+	// GET
 	getRouter := router.Methods(http.MethodGet).Subrouter()
 	getRouter.HandleFunc("/", products.GetProducts)
 
-	// PUT Route
+	// POST
+	postRouter := router.Methods(http.MethodPost).Subrouter()
+	postRouter.HandleFunc("/", products.CreateProduct)
+	postRouter.Use(products.MiddlewareValidateProduct)
+
+	// PUT
 	putRoute := router.Methods(http.MethodPut).Subrouter()
 	putRoute.HandleFunc("/{id:[0-9]+}", products.UpdateProducts)
+	putRoute.Use(products.MiddlewareValidateProduct)
 
 	//register handlers
 	//router.Handle("/", products)
 
 	// server properties
 	server := http.Server{
-		Addr:         ":9091",
+		Addr:         ":" + bindAddress,
 		Handler:      router,
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  1 * time.Second,
@@ -43,6 +51,7 @@ func main() {
 
 	//start the server on a different thread
 	go func() {
+		logger.Println("Starting Server on port", bindAddress)
 		err := server.ListenAndServe()
 		if err != nil {
 			logger.Fatal(err)
