@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"github.com/gorilla/mux"
 	"log"
 	"main/data"
 	"net/http"
+	"strconv"
 )
 
 type Products struct {
@@ -37,10 +39,18 @@ func (p *Products) createProduct(w http.ResponseWriter, r *http.Request) {
 	data.AddProduct(prod)
 }
 
-func (p *Products) updateProducts(id int, w http.ResponseWriter, r *http.Request) {
+func (p *Products) UpdateProducts(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		http.Error(w, "Unable to convert id to int", http.StatusBadRequest)
+		return
+	}
+
 	p.l.Println("Handle PUT Product")
 	prod := &data.Product{}
-	err := prod.FromJSON(r.Body)
+	err = prod.FromJSON(r.Body)
 
 	if err != nil {
 		http.Error(w, "Unable to parse the payload", http.StatusBadRequest)

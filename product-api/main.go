@@ -21,8 +21,13 @@ func main() {
 	// Create a server mux AKA router
 	router := mux.NewRouter()
 
+	// Get Route
 	getRouter := router.Methods(http.MethodGet).Subrouter()
 	getRouter.HandleFunc("/", products.GetProducts)
+
+	// PUT Route
+	putRoute := router.Methods(http.MethodPut).Subrouter()
+	putRoute.HandleFunc("/{id:[0-9]+}", products.UpdateProducts)
 
 	//register handlers
 	//router.Handle("/", products)
